@@ -18,12 +18,10 @@ NAV_KEY = ROOT_FOLDER / "nav_key.json"
 def read_json(path_arg=""):
     with open(path_arg, 'r') as file:
         json_data = json.load(file)
-        if type(json_data) is list:
-            return json_data[0], json_data[1]
         return json_data
 
 
-def make_browwser() -> webdriver.Chrome:
+def make_browser() -> webdriver.Chrome:
     options = webdriver.ChromeOptions()
     services = Service(executable_path=CHROME_DRIVER_EXE)
     browser = webdriver.Chrome(options=options, service=services)
@@ -31,7 +29,6 @@ def make_browwser() -> webdriver.Chrome:
 
 
 def make_click(arg_local=""):
-
     local_click = nav_elements[arg_local]
     element_clickable = EC.element_to_be_clickable
     clickable = WebDriverWait(browser, 12.0).until(
@@ -60,7 +57,7 @@ if not CONFIG.exists():
 login_elements, xlsx_path = read_json(CONFIG)
 nav_elements = read_json(NAV_KEY)
 
-browser = make_browwser()
+browser = make_browser()
 browser.get(nav_elements["site"])
 
 sleep(10)
