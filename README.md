@@ -10,7 +10,23 @@
     - Não funcionais
     - Dependências
 3. Explicação do código
-    - Funções
+    - Navegação web
+        - Constantes e arquivos JSON
+            - Constantes
+            - Arquivos JSON
+        - Funções
+            - Carregando arquivos JSON
+            - Criando instância do navegador
+            - Definindo elemento clicável
+        - Estruturas de repetição e uso do select
+            - Estruturas de repetição for
+                - for: login
+                - for: navegação
+            - Select
+    - Manipulação de relatório
+        - Arquivo CSV
+        - Arquivo XLSX
+            
 4. Contato
 
 ## Introdução
@@ -60,9 +76,45 @@ Sobre a versão atual, além da navegação em navegador web, também realiza a 
 
 ## Explicação do código
 
-### Funções
+### Navegação web
 
-1. Leitura de arquivos JSON:
+#### Constantes e arquivos JSON
+
+1. Constantes
+    - <p style="text-align: justify;">As constantes abaixo servem como fundamentos para acesso das principais operações desse código.<br>
+    - Root_FOLDER recebe o caminho da pasta principal onde o código roda. IMPORTANTE: NO EXECUTÁVEL, O __file__ NÃO É ÚTIL, SENDO NECESSÁRIO IMPORTAR O MÓDULO SYS PARA PASSAR PARA O PATH __"sys.executable"__, que retornará o caminho para o executável.<br>
+    - CONFIG e NAV_KEY são arquivos JSON que serão melhor abordados abaixo no tópico "arquivos JSON"<p>
+    ```python
+    ROOT_FOLDER = Path(__file__).parent
+    CHROME_DRIVER_EXE = ROOT_FOLDER / "chromedriver-win64" / "chromedriver.exe"
+    CONFIG = ROOT_FOLDER / "config.json"
+    NAV_KEY = ROOT_FOLDER / "nav_key.json"
+    ```
+2. Arquivos JSON
+    - <p style="text-align: justify;">Os arquivos JSON chamados config e nav_key, são arquivos que carregam em si informações para login e navegação respectvamente.<br>
+    - Config recebe os dados do input do usuário, nos quais, um é o recebimento do usuário e senha, gurdados em formato dict e o outro é o caminho para a pasta do arquivo XLSX. Essas informações são carregadas para o JSON com o json.dump, quando não existe o arquivo config e existindo, são carregadas através do json.load.<br>
+    - Nav_key contém um dicionário com todos os XPATH necessários para os elementos, desde o login, até o final no botão de download do relatório.<p>
+    Caso não exista o arquivo:
+    ```python
+    if not CONFIG.exists():
+    input_user = input("Insert your user name (name.lastname): ")
+    input_password = input("Insert your password: ")
+    print("WARNING: don't insert the file, only the path to folder!")
+    xlsx_local = input("Insert the path to file xlsx: ")
+
+    dict_dump = {
+        "nome-usuario": input_user,
+        "password": input_password
+    }
+
+    with open(CONFIG, 'w') as file:
+        json.dump((dict_dump, xlsx_local), file)
+    ```
+    Caso o arquivo já exista, o código a ser executado encontra-se abaixo na seção funções.
+
+#### Funções
+
+1. Carregando arquivos JSON:
     - <p style="text-align: justify;">Abre arquivos JSON no modo leitura e retorna seus dados.<p>
 
     ```python
@@ -81,21 +133,88 @@ Sobre a versão atual, além da navegação em navegador web, também realiza a 
 
     ```python
     def make_browser() -> webdriver.Chrome:
-    options = webdriver.ChromeOptions()
-    services = Service(executable_path=CHROME_DRIVER_EXE)
-    browser = webdriver.Chrome(options=options, service=services)
-    return browser
+        options = webdriver.ChromeOptions()
+        services = Service(executable_path=CHROME_DRIVER_EXE)
+        browser = webdriver.Chrome(options=options, service=services)
+        return browser
     ```
 3. Definindo um elemento clicável
-    - <p style="text-align: justify;"><p>
+    - <p style="text-align: justify;">Essa função utiliza o módulo expected_conditions (EC) e a classe WebDriverWait para esperar por elementos e retornar um objeto HTML clicável.<br>
+    A variável local_click recebe do dicionário nav_elements, o XPATH condizente a chave passada pelo argumento arg_local.<br>
+    A variável element_clickable recebe a função do módulo EC, element_to_be_clickable, que é uma função que designa o que deve ser esperado.<br>
+    A variavel clickable recebe um objeto WebElement, que nesse caso é m oca clicável que permite a operação click(). No entanto, para  isso, ele usa a classe WebDriverWait para esperar que o elemento localizado por, agora carregado nele, element_clickable e assim retornar o objeto.<p>
     ```python
     def make_click(arg_local=""):
-    local_click = nav_elements[arg_local]
-    element_clickable = EC.element_to_be_clickable
-    clickable = WebDriverWait(browser, 12.0).until(
-        element_clickable(
-            (By.XPATH, local_click)
+        local_click = nav_elements[arg_local]
+        element_clickable = EC.element_to_be_clickable
+        clickable = WebDriverWait(browser, 12.0).until(
+            element_clickable(
+                (By.XPATH, local_click)
+            )
         )
-    )
     return clickable
     ```
+
+#### Estruturas de repetição e uso do select
+
+1. Laços de repetição for
+    1. Laço for: login
+        - <p style="text-align: justify;">A estrutura de repetição abaixo visa consumir o dicionário de login, para inserir o nome de usuário e a senha. Como são realizados mais processos nessaa etapa, como ddigitar e pressionar Enter, essa estrutura foi separada da estrutura for a seguir.<p>
+        ```python
+        for search_id, data_user in login_elements.items():
+            login = make_click(search_id)
+            login.click()
+            login.send_keys(data_user)
+            login.send_keys(Keys.ENTER)
+        ```
+    2. Laço for: navegação
+        - <p style="text-align: justify;">A estrutura de repetição abaixo visa consumir todo o dicionário de navegação, este dicionário possui todos os XPATH, inclusive com elementos que já foram trabalhados previamente no código, por isso a necessidade de criar uma estrutura condicional para pulr estes laços - embora eu possa reconhecer que uma forma melhor talvez fosse remover essas chaves da lista em um momento anterior no código.<br>
+            A estrutura segue de forma linear até selecionar e baixar o arquivo do relatório desejado.<p>
+        ```python
+        for click_operation in nav_elements:
+            if click_operation in ["site", "nome-usuario", "password"]:
+                continue
+            navegation = make_click(click_operation)
+            navegation.click()
+        ```
+2. Select
+    - <p style="text-align: justify;">O uso do select, por ser casual não foi montado dentro da mesma função, já conhecida, make_click, mas foi adaptada aqui por ter um processo distinto. Ele utiliza a classe select que recebe um objeto WebElement para retornar as opções da caixa de seleção, por sua vez, ele buscará o elemento através do find_element, que é um método do webdriver.chrome, tornando possível a seleção do texto visível esperado.<p>
+    ```python
+    perfil = Select(
+        WebDriverWait(browser, 12.5).until(
+            EC.presence_of_element_located(
+                (By.TAG_NAME, "select")
+            )
+        )
+    )
+    selection = browser.find_element(By.XPATH, "//button[contains(text(), 'Selecionar')]")
+    perfil.select_by_visible_text("PRD-SBT-Gestor")
+    selection.send_keys(Keys.ENTER)
+    ```
+
+### Manipulação de relatório
+
+#### Arquivo CSV
+
+<p style="text-align: justify;">A manipulação do arquivo csv é resumida a extração dos dados do arquivo do relatório baixado, isso é feito com o uso da biblioteca csv para que com o uso do csv reader que retorna um iterator, pelo qual é possível criar uma lista na forma em que está posta para iterar sobre a aba no documento XLSX.<p>
+
+```python
+with open(csv_file, 'r', encoding="utf-8") as file:
+    data = list(csv.reader(file))
+```
+
+#### Arquivo XLSX
+
+<p style="text-align: justify;">Esse trecho do código faz a criaçao de um objeto workbook que carrega em si todo um arquivo excel, dentro desse arquivo a variável table captura a aba L.A, onde as linhas são limpas para que novos valores possam ser inseridos na estrutura condicional lgo abaixo.<p>
+
+```python
+workbook = load_workbook(str(xlsx_file))
+table = workbook["L.A"]
+table.delete_rows(1, table.max_row)
+
+for index_line, line in enumerate(data, start=1):
+    for index_column, data_value in enumerate(index_line, start=1):
+        table.cell(row=index_line, column=index_column, value=data_value)
+```
+
+## Contato
