@@ -3,8 +3,8 @@
 ## SUMARY
 
 1. Introdução
-    - Descrição do projeto
     - Objetivo do projeto
+    - Descrição do projeto
 2. Requisitos
     - Funcionais
     - Não funcionais
