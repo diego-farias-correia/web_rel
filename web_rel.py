@@ -89,12 +89,13 @@ for click_operation in nav_elements:
     sleep(5)
 browser.quit()
 
-
+sleep(10)
 import csv
 from datetime import date
 from openpyxl import load_workbook
 
-csv_file_name = f"LISTAGEM DAS ANOTAÇÕES_{date.today().strftime("%d-%m-%Y")}.csv"
+day = date.today().strftime("%d-%m-%Y")
+csv_file_name = f"LISTAGEM DAS ANOTAÇÕES_{day}.csv"
 csv_file = Path.home() / "Download" / csv_file_name
 
 xlsx_p = Path(xlsx_path)

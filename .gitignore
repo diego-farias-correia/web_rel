@@ -1,3 +1,4 @@
 env/
 config.json
 nav_key.json
+chromedriver-win64/
